@@ -5,13 +5,13 @@ from transformers.trainer import Trainer
 from datasets import Dataset
 import torch
 from peft import LoraConfig, TaskType, get_peft_model
-from .data import get_and_process_dataset
-from .config import TrainingConfig
+from data import get_and_process_dataset
+from config import TrainingConfig
 from transformers.models.auto.tokenization_auto import AutoTokenizer
 
 def train_lora_sft():
     model_id = TrainingConfig.model_id
-    model = AutoModelForCausalLM.from_pretrained(model_id, device_map="auto",torch_dtype=torch.bfloat16)
+    model = AutoModelForCausalLM.from_pretrained(model_id, device_map="auto",torch_dtype=torch.bfloat16).to(GlobalConfig.device)
     model.enable_input_require_grads()
 
     config = LoraConfig(
@@ -34,7 +34,7 @@ def train_lora_sft():
         learning_rate=1e-4,
         save_on_each_node=True,
         gradient_checkpointing=True,
-        report_to=["wandb"],
+        # report_to=["wandb"],
     )
 
     tokenizer = AutoTokenizer.from_pretrained(model_id, use_fast=False)

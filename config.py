@@ -4,6 +4,7 @@ class GlobalConfig:
     """
     do_train = True
     do_test = False
+    device = 'cuda'
 
 
 class TrainingConfig:
@@ -22,6 +23,3 @@ class TestConfig:
     model_id = ''
     dataset_path = ''
     output_dir = 'output'
-
-
-        

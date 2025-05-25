@@ -3,8 +3,9 @@ import pandas as pd
 from transformers.tokenization_utils import PreTrainedTokenizer
 
 def load_dataset(path: str) -> Dataset:
-    df = pd.read_json(path)
-    ds = Dataset.from_pandas(df)
+    df = pd.read_json(path, lines=True)
+    df = df.drop(columns=["ids"])
+    ds = Dataset.from_pandas(df, preserve_index=False)
     return ds
 
 def process_example(example: dict[str, str], tokenizer) -> dict[str, list[int]]:
@@ -49,7 +50,7 @@ def process_example(example: dict[str, str], tokenizer) -> dict[str, list[int]]:
     }
 
 
-def get_and_process_dataset(path: str, tokenizer: PreTrainedTokenizer) -> Dataset:
+def get_and_process_dataset(path: str, tokenizer) -> Dataset:
     dataset = load_dataset(path)
     processed_dataset = dataset.map(
         lambda x: process_example(x, tokenizer),
