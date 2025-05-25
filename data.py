@@ -1,6 +1,20 @@
 from datasets import Dataset
 import pandas as pd
 from transformers.tokenization_utils import PreTrainedTokenizer
+from config import GlobalConfig
+import torch
+
+
+class CodeRefinementDataset(Dataset):
+    def __init__(self, items):
+        self.items = items
+
+    def __len__(self):
+        return len(self.items["input_ids"])
+
+    def __getitem__(self, idx):
+        item = {key: torch.tensor(val[idx]).to(GlobalConfig.device) for key, val in self.items.items()}
+        return item
 
 def load_dataset(path: str) -> Dataset:
     df = pd.read_json(path, lines=True)
@@ -15,6 +29,16 @@ def process_example(example: dict[str, str], tokenizer) -> dict[str, list[int]]:
         "output the improved code according to the review. Do not add any other comments or explanations."
     )
     MAX_LENGTH = 4096
+    OLD_HUNK_MAX_LENGTH = 2048
+    OLDF_MAX_LENGTH = 1024
+    COMMENT_MAX_LENGTH = 1024
+    NEW_MAX_LENGTH = 1024
+
+    # Truncate the old hunk, oldf, and comment if they exceed their respective max lengths
+    example["old_hunk"] = example["old_hunk"][:OLD_HUNK_MAX_LENGTH]
+    example["oldf"] = example["oldf"][:OLDF_MAX_LENGTH]
+    example["comment"] = example["comment"][:COMMENT_MAX_LENGTH]
+    example["new"] = example["new"][:NEW_MAX_LENGTH]
 
     # Compose the user instruction
     instruction = (
@@ -43,11 +67,13 @@ def process_example(example: dict[str, str], tokenizer) -> dict[str, list[int]]:
         attention_mask = attention_mask[:MAX_LENGTH]
         labels = labels[:MAX_LENGTH]
 
-    return {
+    res = {
         "input_ids": input_ids,
         "attention_mask": attention_mask,
         "labels": labels
     }
+
+    return res
 
 
 def get_and_process_dataset(path: str, tokenizer) -> Dataset:
@@ -56,4 +82,5 @@ def get_and_process_dataset(path: str, tokenizer) -> Dataset:
         lambda x: process_example(x, tokenizer),
         remove_columns=dataset.column_names,
     )
+    # processed_dataset = CodeRefinementDataset(processed_dataset)
     return processed_dataset

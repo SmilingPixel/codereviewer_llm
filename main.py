@@ -1,4 +1,5 @@
 from datasets import Dataset
+from datetime import datetime
 import pandas as pd
 from transformers.models.auto.tokenization_auto import AutoTokenizer
 from transformers.models.auto.modeling_auto import AutoModelForCausalLM
@@ -12,16 +13,17 @@ import torch
 
 if __name__ == "__main__":
 
-    GlobalConfig.do_train = True
-    GlobalConfig.do_test = False
-    GlobalConfig.device = 'cuda'
+    # Load config from files if available
+    GlobalConfig.load_from_file("global_config.json")
+    TrainingConfig.load_from_file("train_config.json")
+    # If you use TestConfig, load as well:
+    # from config import TestConfig
+    # TestConfig.load_from_file("test_config.json")
 
-    TrainingConfig.model_id = '/content/codereviewer_llm/models/Qwen3-0.6B'
-    TrainingConfig.output_dir = "output"
-    TrainingConfig.dataset_path = '/content/codereviewer_llm/datasets/code_refinement/ref-train.jsonl'
-    
 
-    import wandb
+    TrainingConfig.output_dir = f"output_{datetime.now().strftime('%Y%m%d%H%M')}"    
+
+    # import wandb
     # wandb.login()
 
     if GlobalConfig.do_train:

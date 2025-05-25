@@ -6,12 +6,13 @@ from datasets import Dataset
 import torch
 from peft import LoraConfig, TaskType, get_peft_model
 from data import get_and_process_dataset
-from config import TrainingConfig
+from config import TrainingConfig, GlobalConfig
 from transformers.models.auto.tokenization_auto import AutoTokenizer
 
 def train_lora_sft():
     model_id = TrainingConfig.model_id
-    model = AutoModelForCausalLM.from_pretrained(model_id, device_map="auto",torch_dtype=torch.bfloat16).to(GlobalConfig.device)
+    model = AutoModelForCausalLM.from_pretrained(model_id, device_map="auto", torch_dtype=torch.bfloat16) #.to(GlobalConfig.device)
+    print(f"Model device: {next(model.parameters()).device}")
     model.enable_input_require_grads()
 
     config = LoraConfig(
@@ -22,19 +23,20 @@ def train_lora_sft():
         lora_alpha=32, # Lora alaph，具体作用参见 Lora 原理
         lora_dropout=0.1 # Dropout 比例
     )
-    model = get_peft_model(model, config)
+    model = get_peft_model(model, config)#.to(GlobalConfig.device)
 
     args = TrainingArguments(
-        output_dir="output",
-        per_device_train_batch_size=4,
+        output_dir=TrainingConfig.output_dir,
+        per_device_train_batch_size=TrainingConfig.batch_size,
         gradient_accumulation_steps=4,
         logging_steps=1,
-        num_train_epochs=3,
-        save_steps=50,
-        learning_rate=1e-4,
+        num_train_epochs=TrainingConfig.num_epochs,
+        save_steps=500,
+        learning_rate=TrainingConfig.learning_rate,
         save_on_each_node=True,
+        save_total_limit=5,
         gradient_checkpointing=True,
-        # report_to=["wandb"],
+        report_to=["wandb"],
     )
 
     tokenizer = AutoTokenizer.from_pretrained(model_id, use_fast=False)

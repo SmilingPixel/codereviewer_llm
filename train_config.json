@@ -1,0 +1,8 @@
+{
+    "model_id": "/content/codereviewer_llm/models/Qwen3-0.6B",
+    "dataset_path": "/content/codereviewer_llm/datasets/code_refinement/ref-train.jsonl",
+    "output_dir": "output",
+    "batch_size": 4,
+    "learning_rate": 0.0001,
+    "num_epochs": 1
+}
