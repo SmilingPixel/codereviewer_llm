@@ -29,21 +29,26 @@ def process_example(example: dict[str, str], tokenizer) -> dict[str, list[int]]:
         "output the improved code according to the review. Do not add any other comments or explanations."
     )
     MAX_LENGTH = 4096
-    OLD_HUNK_MAX_LENGTH = 2048
-    OLDF_MAX_LENGTH = 1024
-    COMMENT_MAX_LENGTH = 1024
-    NEW_MAX_LENGTH = 1024
+    OLD_HUNK_MAX_LENGTH = 128
+    HUNK_MAX_LENGTH = 128
+    OLDF_MAX_LENGTH = 2048
+    OLD_MAX_LENGTH = 512
+    NEW_MAX_LENGTH = 512
+    COMMENT_MAX_LENGTH = 512
 
     # Truncate the old hunk, oldf, and comment if they exceed their respective max lengths
     example["old_hunk"] = example["old_hunk"][:OLD_HUNK_MAX_LENGTH]
+    example["hunk"] = example["hunk"][:HUNK_MAX_LENGTH]
     example["oldf"] = example["oldf"][:OLDF_MAX_LENGTH]
-    example["comment"] = example["comment"][:COMMENT_MAX_LENGTH]
+    example["old"] = example["old"][:OLD_MAX_LENGTH]
     example["new"] = example["new"][:NEW_MAX_LENGTH]
+    example["comment"] = example["comment"][:COMMENT_MAX_LENGTH]
 
     # Compose the user instruction
     instruction = (
         f"Old hunk:\n```\n{example['old_hunk']}\n```\n"
         f"Old code:\n```\n{example['oldf']}\n```\n"
+        f"old diff:\n```\n{example['old']}\n```\n"
         f"Review comment:\n```\n{example['comment']}\n```\n"
         "Please output the improved code.\n"
     )
@@ -84,3 +89,4 @@ def get_and_process_dataset(path: str, tokenizer) -> Dataset:
     )
     # processed_dataset = CodeRefinementDataset(processed_dataset)
     return processed_dataset
+    
