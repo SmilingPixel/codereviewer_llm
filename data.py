@@ -22,12 +22,7 @@ def load_dataset(path: str) -> Dataset:
     ds = Dataset.from_pandas(df, preserve_index=False)
     return ds
 
-def process_example(example: dict[str, str], tokenizer) -> dict[str, list[int]]:
-    # Hardcoded system prompt
-    system_prompt = (
-        "You are an AI code reviewer. Given a code snippet and a review comment, "
-        "output the improved code according to the review. Do not add any other comments or explanations."
-    )
+def get_instruction_and_response(example: dict[str, str]) -> tuple[str, str]:
     MAX_LENGTH = 4096
     OLD_HUNK_MAX_LENGTH = 128
     HUNK_MAX_LENGTH = 128
@@ -52,6 +47,17 @@ def process_example(example: dict[str, str], tokenizer) -> dict[str, list[int]]:
         f"Review comment:\n```\n{example['comment']}\n```\n"
         "Please output the improved code.\n"
     )
+    resp = f"```\n{example['new']}\n```"
+
+    return instruction, resp
+
+def process_example(example: dict[str, str], tokenizer) -> dict[str, list[int]]:
+    # Hardcoded system prompt
+    system_prompt = (
+        "You are an AI code reviewer. Given a code snippet and a review comment, "
+        "output the improved code according to the review. Do not add any other comments or explanations."
+    )
+    instruction, response = get_instruction_and_response(example, tokenizer)
 
     # Use the chat template
     instruction_tokens = tokenizer(
@@ -60,7 +66,7 @@ def process_example(example: dict[str, str], tokenizer) -> dict[str, list[int]]:
         f"<|im_start|>assistant\n<think>\n\n</think>\n\n",
         add_special_tokens=False
     )
-    response_tokens = tokenizer(f"```\n{example['new']}\n```", add_special_tokens=False)
+    response_tokens = tokenizer(response, add_special_tokens=False)
 
     input_ids = instruction_tokens["input_ids"] + response_tokens["input_ids"] + [tokenizer.pad_token_id]
     attention_mask = instruction_tokens["attention_mask"] + response_tokens["attention_mask"] + [1]
