@@ -23,6 +23,22 @@ def test():
         "comment": ""
     }
 
+    MAX_LENGTH = 4096
+    OLD_HUNK_MAX_LENGTH = 128
+    HUNK_MAX_LENGTH = 128
+    OLDF_MAX_LENGTH = 2048
+    OLD_MAX_LENGTH = 512
+    NEW_MAX_LENGTH = 512
+    COMMENT_MAX_LENGTH = 512
+
+    # Truncate the old hunk, oldf, and comment if they exceed their respective max lengths
+    example["old_hunk"] = example["old_hunk"][:OLD_HUNK_MAX_LENGTH]
+    example["hunk"] = example["hunk"][:HUNK_MAX_LENGTH]
+    example["oldf"] = example["oldf"][:OLDF_MAX_LENGTH]
+    example["old"] = example["old"][:OLD_MAX_LENGTH]
+    example["new"] = example["new"][:NEW_MAX_LENGTH]
+    example["comment"] = example["comment"][:COMMENT_MAX_LENGTH]
+
     instruction = (
         f"Old hunk:\n```\n{example['old_hunk']}\n```\n"
         f"Old code:\n```\n{example['oldf']}\n```\n"
@@ -43,7 +59,7 @@ def test():
                                         return_dict=True,
                                         enable_thinking=False).to('cuda')
 
-    gen_kwargs = {"max_length": 2500, "do_sample": True, "top_k": 1}
+    gen_kwargs = {"max_length": 4096, "do_sample": True, "top_k": 1}
     with torch.no_grad():
         outputs = model.generate(**inputs, **gen_kwargs)
         outputs = outputs[:, inputs['input_ids'].shape[1]:]
