@@ -22,7 +22,7 @@ def load_dataset(path: str) -> Dataset:
     ds = Dataset.from_pandas(df, preserve_index=False)
     return ds
 
-def get_instruction_and_response(example: dict[str, str]) -> tuple[str, str]:
+def get_instruction_and_response(example: dict[str, str]) -> dict[str, str]:
     MAX_LENGTH = 4096
     OLD_HUNK_MAX_LENGTH = 128
     HUNK_MAX_LENGTH = 128
@@ -49,7 +49,10 @@ def get_instruction_and_response(example: dict[str, str]) -> tuple[str, str]:
     )
     resp = f"```\n{example['new']}\n```"
 
-    return instruction, resp
+    return {
+        "instruction": instruction,
+        "response": resp
+    }
 
 def process_example(example: dict[str, str], tokenizer) -> dict[str, list[int]]:
     # Hardcoded system prompt
@@ -57,7 +60,9 @@ def process_example(example: dict[str, str], tokenizer) -> dict[str, list[int]]:
         "You are an AI code reviewer. Given a code snippet and a review comment, "
         "output the improved code according to the review. Do not add any other comments or explanations."
     )
-    instruction, response = get_instruction_and_response(example, tokenizer)
+    instruction_response = get_instruction_and_response(example)
+    instruction = instruction_response["instruction"]
+    response = instruction_response["response"]
 
     # Use the chat template
     instruction_tokens = tokenizer(
@@ -72,6 +77,7 @@ def process_example(example: dict[str, str], tokenizer) -> dict[str, list[int]]:
     attention_mask = instruction_tokens["attention_mask"] + response_tokens["attention_mask"] + [1]
     labels = [-100] * len(instruction_tokens["input_ids"]) + response_tokens["input_ids"] + [tokenizer.pad_token_id]
 
+    MAX_LENGTH = 4096
     # Truncate if necessary
     if len(input_ids) > MAX_LENGTH:
         input_ids = input_ids[:MAX_LENGTH]
@@ -95,4 +101,3 @@ def get_and_process_dataset(path: str, tokenizer) -> Dataset:
     )
     # processed_dataset = CodeRefinementDataset(processed_dataset)
     return processed_dataset
-    
